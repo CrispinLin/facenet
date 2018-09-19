@@ -140,6 +140,7 @@ def evaluate(sess, enqueue_op, image_paths_placeholder, labels_placeholder,
         })
 
     embedding_size = int(embeddings.get_shape()[1])
+    print(nrof_images)
     assert nrof_images % batch_size == 0, 'The number of LFW images must be an integer multiple of the LFW batch size'
     nrof_batches = nrof_images // batch_size
     emb_array = np.zeros((nrof_images, embedding_size))
@@ -210,7 +211,7 @@ def parse_arguments(argv):
         '--lfw_pairs',
         type=str,
         help='The file containing the pairs to use for validation.',
-        default='data/pairs.txt')
+        default='data/own_pairs.txt')
     parser.add_argument(
         '--lfw_nrof_folds',
         type=int,
