@@ -33,7 +33,7 @@ import tensorflow as tf
 import numpy as np
 import argparse
 import facenet
-import lfw
+import own
 import os
 import sys
 from tensorflow.python.ops import data_flow_ops
@@ -49,10 +49,10 @@ def main(args):
         with tf.Session() as sess:
 
             # Read the file containing the pairs used for testing
-            pairs = lfw.read_pairs(os.path.expanduser(args.lfw_pairs))
+            pairs = own.read_pairs(os.path.expanduser(args.lfw_pairs))
 
             # Get the paths for the corresponding images
-            paths, actual_issame = lfw.get_paths(
+            paths, actual_issame = own.get_paths(
                 os.path.expanduser(args.lfw_dir), pairs)
 
             image_paths_placeholder = tf.placeholder(
@@ -167,7 +167,7 @@ def evaluate(sess, enqueue_op, image_paths_placeholder, labels_placeholder,
     assert np.array_equal(
         lab_array, np.arange(nrof_images)
     ) == True, 'Wrong labels used for evaluation, possibly caused by training examples left in the input pipeline'
-    tpr, fpr, accuracy, val, val_std, far = lfw.evaluate(
+    tpr, fpr, accuracy, val, val_std, far = own.evaluate(
         embeddings,
         actual_issame,
         nrof_folds=nrof_folds,
