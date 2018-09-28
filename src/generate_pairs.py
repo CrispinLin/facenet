@@ -7,7 +7,7 @@ import fnmatch
 
 def main(args):
     with open(args.pairs, 'w') as outfile:
-        outfile.write("10   300 \n")
+        outfile.write("10   200 \n")
         for i, f in enumerate(os.scandir(args.image_dir)):
             if not f.is_dir():
                 continue
@@ -56,12 +56,12 @@ def parse_arguments(argv):
         '--number_positive',
         type=int,
         help='Number of positive image pairs generated to test.',
-        default=100)
+        default=150)
     parser.add_argument(
         '--number_negative',
         type=int,
         help='Number of negative image pairs generated to test.',
-        default=100)
+        default=150)
     parser.add_argument(
         '--pairs',
         type=str,

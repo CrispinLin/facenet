@@ -50,15 +50,18 @@ def evaluate(embeddings,
         distance_metric=distance_metric,
         subtract_mean=subtract_mean)
     thresholds = np.arange(0, 4, 0.001)
-    val, val_std, far = facenet.calculate_val(
-        thresholds,
-        embeddings1,
-        embeddings2,
-        np.asarray(actual_issame),
-        1e-3,
-        nrof_folds=nrof_folds,
-        distance_metric=distance_metric,
-        subtract_mean=subtract_mean)
+    print('==========FIXIT==========2')
+    # val, val_std, far = facenet.calculate_val(
+    #     thresholds,
+    #     embeddings1,
+    #     embeddings2,
+    #     np.asarray(actual_issame),
+    #     1e-3,
+    #     nrof_folds=nrof_folds,
+    #     distance_metric=distance_metric,
+    #     subtract_mean=subtract_mean)
+    print('==========FIXIT==========3')
+    val, val_std, far = 0, 0, 0
     return tpr, fpr, accuracy, val, val_std, far
 
 
@@ -72,12 +75,8 @@ def get_paths(lfw_dir, pairs):
             path1 = add_extension(os.path.join(lfw_dir, pair[0], pair[2]))
             issame = True
         elif len(pair) == 4:
-            path0 = add_extension(
-                os.path.join(lfw_dir, pair[0],
-                             pair[0] + '_' + '%04d' % int(pair[1])))
-            path1 = add_extension(
-                os.path.join(lfw_dir, pair[2],
-                             pair[2] + '_' + '%04d' % int(pair[3])))
+            path0 = add_extension(os.path.join(lfw_dir, pair[0], pair[1]))
+            path1 = add_extension(os.path.join(lfw_dir, pair[2], pair[3]))
             issame = False
         if os.path.exists(path0) and os.path.exists(
                 path1):  # Only add the pair if both paths exist

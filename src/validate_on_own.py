@@ -156,7 +156,6 @@ def evaluate(sess, enqueue_op, image_paths_placeholder, labels_placeholder,
         if i % 10 == 9:
             print('.', end='')
             sys.stdout.flush()
-    print('')
     embeddings = np.zeros((nrof_embeddings, embedding_size * nrof_flips))
     if use_flipped_images:
         # Concatenate embeddings for flipped and non flipped version of the images
@@ -174,6 +173,7 @@ def evaluate(sess, enqueue_op, image_paths_placeholder, labels_placeholder,
         nrof_folds=nrof_folds,
         distance_metric=distance_metric,
         subtract_mean=subtract_mean)
+    print('==========NO ERROR LINE==========')
 
     print('Accuracy: %2.5f+-%2.5f' % (np.mean(accuracy), np.std(accuracy)))
     print('Validation rate: %2.5f+-%2.5f @ FAR=%2.5f' % (val, val_std, far))
@@ -195,7 +195,7 @@ def parse_arguments(argv):
         '--lfw_batch_size',
         type=int,
         help='Number of images to process in a batch in the LFW test set.',
-        default=100)
+        default=50)
     parser.add_argument(
         'model',
         type=str,
