@@ -42,6 +42,40 @@ from scipy.optimize import brentq
 from scipy import interpolate
 
 
+def add_extension(path):
+    if os.path.exists(path + '.jpg'):
+        return path + '.jpg'
+    elif os.path.exists(path + '.png'):
+        return path + '.png'
+    else:
+        raise RuntimeError('No file "%s" with extension png or jpg.' % path)
+
+
+def get_paths(patch_dir, pairs):
+    nrof_skipped_pairs = 0
+    path_list = []
+    issame_list = []
+    for pair in pairs:
+        if len(pair) == 3:
+            path0 = add_extension(os.path.join(patch_dir, pair[0], pair[1]))
+            path1 = add_extension(os.path.join(patch_dir, pair[0], pair[2]))
+            issame = True
+        elif len(pair) == 4:
+            path0 = add_extension(os.path.join(patch_dir, pair[0], pair[1]))
+            path1 = add_extension(os.path.join(patch_dir, pair[2], pair[3]))
+            issame = False
+        if os.path.exists(path0) and os.path.exists(
+                path1):  # Only add the pair if both paths exist
+            path_list += (path0, path1)
+            issame_list.append(issame)
+        else:
+            nrof_skipped_pairs += 1
+    if nrof_skipped_pairs > 0:
+        print('Skipped %d image pairs' % nrof_skipped_pairs)
+
+    return path_list, issame_list
+
+
 def main(args):
 
     with tf.Graph().as_default():
@@ -90,7 +124,6 @@ def main(args):
                 'label_batch': label_batch,
                 'phase_train': phase_train_placeholder
             }
-            facenet.load_model(args.model, input_map=input_map)
 
             # Get output tensor
             embeddings = tf.get_default_graph().get_tensor_by_name(
@@ -173,7 +206,6 @@ def evaluate(sess, enqueue_op, image_paths_placeholder, labels_placeholder,
         nrof_folds=nrof_folds,
         distance_metric=distance_metric,
         subtract_mean=subtract_mean)
-    print('==========NO ERROR LINE==========')
 
     print('Accuracy: %2.5f+-%2.5f' % (np.mean(accuracy), np.std(accuracy)))
     print('Validation rate: %2.5f+-%2.5f @ FAR=%2.5f' % (val, val_std, far))
@@ -188,30 +220,19 @@ def parse_arguments(argv):
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
-        'lfw_dir',
+        'patch_dir',
         type=str,
-        help='Path to the data directory containing aligned LFW face patches.')
+        help='Path to the data directory containing patches.')
     parser.add_argument(
         '--lfw_batch_size',
         type=int,
         help='Number of images to process in a batch in the LFW test set.',
         default=50)
     parser.add_argument(
-        'model',
-        type=str,
-        help=
-        'Could be either a directory containing the meta_file and ckpt_file or a model protobuf (.pb) file'
-    )
-    parser.add_argument(
         '--image_size',
         type=int,
         help='Image size (height, width) in pixels.',
         default=160)
-    parser.add_argument(
-        '--lfw_pairs',
-        type=str,
-        help='The file containing the pairs to use for validation.',
-        default='data/own_pairs.txt')
     parser.add_argument(
         '--lfw_nrof_folds',
         type=int,
@@ -223,19 +244,6 @@ def parse_arguments(argv):
         type=int,
         help='Distance metric  0:euclidian, 1:cosine similarity.',
         default=0)
-    parser.add_argument(
-        '--use_flipped_images',
-        help=
-        'Concatenates embeddings for the image and its horizontally flipped counterpart.',
-        action='store_true')
-    parser.add_argument(
-        '--subtract_mean',
-        help='Subtract feature mean before calculating distance.',
-        action='store_true')
-    parser.add_argument(
-        '--use_fixed_image_standardization',
-        help='Performs fixed standardization of images.',
-        action='store_true')
     return parser.parse_args(argv)
 
 
