@@ -116,7 +116,7 @@ def main(args):
             images = []
             for filename in tf.unstack(filenames):
                 file_contents = tf.read_file(filename)
-                image = tf.image.decode_image(file_contents, channels=3)
+                image = tf.image.decode_image(file_contents, channels=1)
 
                 if args.random_crop:
                     image = tf.random_crop(
