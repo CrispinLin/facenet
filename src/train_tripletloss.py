@@ -120,7 +120,7 @@ def main(args):
 
                 if args.random_crop:
                     image = tf.random_crop(
-                        image, [args.image_size, args.image_size, 3])
+                        image, [args.image_size, args.image_size, 1])
                 else:
                     image = tf.image.resize_image_with_crop_or_pad(
                         image, args.image_size, args.image_size)
@@ -128,14 +128,14 @@ def main(args):
                     image = tf.image.random_flip_left_right(image)
 
                 #pylint: disable=no-member
-                image.set_shape((args.image_size, args.image_size, 3))
+                image.set_shape((args.image_size, args.image_size, 1))
                 images.append(tf.image.per_image_standardization(image))
             images_and_labels.append([images, label])
 
         image_batch, labels_batch = tf.train.batch_join(
             images_and_labels,
             batch_size=batch_size_placeholder,
-            shapes=[(args.image_size, args.image_size, 3), ()],
+            shapes=[(args.image_size, args.image_size, 1), ()],
             enqueue_many=True,
             capacity=4 * nrof_preprocess_threads * args.batch_size,
             allow_smaller_final_batch=True)
