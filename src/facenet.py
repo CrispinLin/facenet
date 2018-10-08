@@ -119,13 +119,13 @@ def create_input_pipeline(input_queue, image_size, nrof_preprocess_threads,
         images = []
         for filename in tf.unstack(filenames):
             file_contents = tf.read_file(filename)
-            image = tf.image.decode_image(file_contents, 3)
+            image = tf.image.decode_image(file_contents, 1)
             image = tf.cond(
                 get_control_flag(control[0], RANDOM_ROTATE),
                 lambda: tf.py_func(random_rotate_image, [image], tf.uint8),
                 lambda: tf.identity(image))
             image = tf.cond(get_control_flag(control[0], RANDOM_CROP),
-                            lambda:tf.random_crop(image, image_size + (3,)),
+                            lambda:tf.random_crop(image, image_size + (1,)),
                             lambda:tf.image.resize_image_with_crop_or_pad(image, image_size[0], image_size[1]))
             image = tf.cond(
                 get_control_flag(control[0], RANDOM_FLIP),
@@ -140,14 +140,14 @@ def create_input_pipeline(input_queue, image_size, nrof_preprocess_threads,
                 lambda: tf.image.flip_left_right(image),
                 lambda: tf.identity(image))
             #pylint: disable=no-member
-            image.set_shape(image_size + (3, ))
+            image.set_shape(image_size + (1, ))
             images.append(image)
         images_and_labels_list.append([images, label])
 
     image_batch, label_batch = tf.train.batch_join(
         images_and_labels_list,
         batch_size=batch_size_placeholder,
-        shapes=[image_size + (3, ), ()],
+        shapes=[image_size + (1, ), ()],
         enqueue_many=True,
         capacity=4 * nrof_preprocess_threads * 100,
         allow_smaller_final_batch=True)
