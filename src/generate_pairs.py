@@ -18,10 +18,13 @@ def main(args):
                     i for i in os.listdir(f.path)
                     if fnmatch.fnmatch(i, '*.png')
                 ]
+                if len(pnglist) < 2:
+                    print("Path with only 1 image: " + f.path)
+                    continue
                 path0 = pnglist[0][:-4]
                 path1 = pnglist[1][:-4]
                 outfile.write(' '.join([f.name, path0, path1, '\n']))
-        i = 0
+        i = 1
         for f in os.scandir(args.image_dir):
             if not f.is_dir():
                 continue

@@ -98,37 +98,43 @@ def main(args):
     print(actual_issame[0])
 
     img1 = cv2.imread(paths[0], cv2.IMREAD_GRAYSCALE)
-    img2 = cv2.imread(paths[2], cv2.IMREAD_GRAYSCALE)
+    img2 = cv2.imread(paths[1], cv2.IMREAD_GRAYSCALE)
 
     sift = cv2.xfeatures2d.SIFT_create()
     # surf = cv2.xfeatures2d.SURF_create()
+
+    # create a mask image filled with zeros, the size of original image
+    mask = np.zeros(img1.shape[:2], dtype=np.uint8)
+    # draw your selected ROI on the mask image
+    cv2.rectangle(mask, (24, 24), (40, 40), (255), thickness=-1)
+
     kp1, des1 = sift.detectAndCompute(img1, None)
     kp2, des2 = sift.detectAndCompute(img2, None)
     bf = cv2.BFMatcher()
     matches = bf.knnMatch(des1, des2, k=2)
-
     # Apply ratio test
     good = []
     for m, n in matches:
         if m.distance < 0.75 * n.distance:
             good.append([m])
-
+    print(good)
     # cv2.drawMatchesKnn expects list of lists as matches.
-    img3 = cv2.drawMatchesKnn(img1, kp1, img2, kp2, good, img2)
+    img3 = cv2.drawMatchesKnn(img1, kp1, img2, kp2, good, None)
 
     cv2.imshow("matches", img3)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
 
-    print(paths[300])
-    print(paths[301])
-    print(actual_issame[150])
+    print(paths[400])
+    print(paths[401])
+    print(actual_issame[200])
 
-    img1 = cv2.imread(paths[300], cv2.IMREAD_GRAYSCALE)
-    img2 = cv2.imread(paths[301], cv2.IMREAD_GRAYSCALE)
+    img1 = cv2.imread(paths[400], cv2.IMREAD_GRAYSCALE)
+    img2 = cv2.imread(paths[401], cv2.IMREAD_GRAYSCALE)
 
     sift = cv2.xfeatures2d.SIFT_create()
     # surf = cv2.xfeatures2d.SURF_create()
+
     kp1, des1 = sift.detectAndCompute(img1, None)
     kp2, des2 = sift.detectAndCompute(img2, None)
     bf = cv2.BFMatcher()

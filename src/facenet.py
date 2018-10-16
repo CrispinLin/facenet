@@ -512,6 +512,7 @@ def calculate_roc(thresholds,
             mean = 0.0
         dist = distance(embeddings1 - mean, embeddings2 - mean,
                         distance_metric)
+        print(dist)
 
         # Find the best threshold for the fold
         acc_train = np.zeros((nrof_thresholds))
@@ -540,11 +541,6 @@ def calculate_accuracy(threshold, dist, actual_issame):
         np.logical_and(
             np.logical_not(predict_issame), np.logical_not(actual_issame)))
     fn = np.sum(np.logical_and(np.logical_not(predict_issame), actual_issame))
-
-    print("tp=", tp)
-    print("tp=", tp)
-    print("tn=", tn)
-    print("fn=", fn)
 
     tpr = 0 if (tp + fn == 0) else float(tp) / float(tp + fn)
     fpr = 0 if (fp + tn == 0) else float(fp) / float(fp + tn)
@@ -584,7 +580,6 @@ def calculate_val(thresholds,
 
         # Find the threshold that gives FAR = far_target
         far_train = np.zeros(nrof_thresholds)
-        print('==========NO ERROR LINE==========3')
         for threshold_idx, threshold in enumerate(thresholds):
             _, far_train[threshold_idx] = calculate_val_far(
                 threshold, dist[train_set], actual_issame[train_set])
@@ -594,9 +589,9 @@ def calculate_val(thresholds,
         else:
             threshold = 0.0
 
-        print('==========NO ERROR LINE==========3')
-        val[fold_idx], far[fold_idx] = calculate_val_far(
-            threshold, dist[test_set], actual_issame[test_set])
+        print('FIXME 1 facenet.py, line 592')
+        # val[fold_idx], far[fold_idx] = calculate_val_far(
+        # threshold, dist[test_set], actual_issame[test_set])
 
     val_mean = np.mean(val)
     far_mean = np.mean(far)

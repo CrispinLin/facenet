@@ -173,15 +173,15 @@ def evaluate(sess, enqueue_op, image_paths_placeholder, labels_placeholder,
         nrof_folds=nrof_folds,
         distance_metric=distance_metric,
         subtract_mean=subtract_mean)
-    print('==========NO ERROR LINE==========')
 
     print('Accuracy: %2.5f+-%2.5f' % (np.mean(accuracy), np.std(accuracy)))
     print('Validation rate: %2.5f+-%2.5f @ FAR=%2.5f' % (val, val_std, far))
 
     auc = metrics.auc(fpr, tpr)
     print('Area Under Curve (AUC): %1.3f' % auc)
-    eer = brentq(lambda x: 1. - x - interpolate.interp1d(fpr, tpr)(x), 0., 1.)
-    print('Equal Error Rate (EER): %1.3f' % eer)
+    print("FIXME 2 validate_on_own.py, line 183")
+    # eer = brentq(lambda x: 1. - x - interpolate.interp1d(fpr, tpr)(x), 0., 1.)
+    # print('Equal Error Rate (EER): %1.3f' % eer)
 
 
 def parse_arguments(argv):

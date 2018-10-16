@@ -50,17 +50,15 @@ def evaluate(embeddings,
         distance_metric=distance_metric,
         subtract_mean=subtract_mean)
     thresholds = np.arange(0, 4, 0.001)
-    print('==========FIXIT==========2')
-    # val, val_std, far = facenet.calculate_val(
-    #     thresholds,
-    #     embeddings1,
-    #     embeddings2,
-    #     np.asarray(actual_issame),
-    #     1e-3,
-    #     nrof_folds=nrof_folds,
-    #     distance_metric=distance_metric,
-    #     subtract_mean=subtract_mean)
-    print('==========FIXIT==========3')
+    val, val_std, far = facenet.calculate_val(
+        thresholds,
+        embeddings1,
+        embeddings2,
+        np.asarray(actual_issame),
+        1e-3,
+        nrof_folds=nrof_folds,
+        distance_metric=distance_metric,
+        subtract_mean=subtract_mean)
     val, val_std, far = 0, 0, 0
     return tpr, fpr, accuracy, val, val_std, far
 
