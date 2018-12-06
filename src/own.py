@@ -30,6 +30,7 @@ from __future__ import print_function
 import os
 import numpy as np
 import facenet
+import matplotlib.pyplot as plt
 
 
 def evaluate(embeddings,
@@ -104,3 +105,33 @@ def read_pairs(pairs_filename):
             pair = line.strip().split()
             pairs.append(pair)
     return np.array(pairs)
+
+
+def read_input(input_filename, lfw_dir):
+    tags = []
+    with open(input_filename, 'r') as f:
+        for line in f.readlines()[1:]:
+            tag = line.strip().split()
+            tags.append(tag)
+    tags = np.array(tags)
+
+    nrof_skipped = 0
+    path_list = []
+    for tag in tags:
+        path0 = add_extension(os.path.join(lfw_dir, tag[0], tag[1]))
+        # elif len(pair) == 3:
+        #     path0 = add_extension(os.path.join(lfw_dir, pair[0], pair[1]))
+        #     path1 = add_extension(os.path.join(lfw_dir, pair[0], pair[2]))
+        #     issame = True
+        # elif len(pair) == 4:
+        #     path0 = add_extension(os.path.join(lfw_dir, pair[0], pair[1]))
+        #     path1 = add_extension(os.path.join(lfw_dir, pair[2], pair[3]))
+        #     issame = False
+        if os.path.exists(path0):  # Only add the pair if both paths exist
+            path_list.append(path0)
+        else:
+            nrof_skipped += 1
+    if nrof_skipped > 0:
+        print('Skipped %d image that does not exist' % nrof_skipped)
+
+    return path_list, tags

@@ -40,6 +40,7 @@ import re
 from tensorflow.python.platform import gfile
 import math
 from six import iteritems
+import matplotlib.pyplot as plt
 
 
 def triplet_loss(anchor, positive, negative, alpha):
@@ -502,6 +503,8 @@ def calculate_roc(thresholds,
 
     indices = np.arange(nrof_pairs)
 
+    dist_hist = np.array([])
+
     for fold_idx, (train_set, test_set) in enumerate(k_fold.split(indices)):
         if subtract_mean:
             mean = np.mean(
@@ -512,7 +515,7 @@ def calculate_roc(thresholds,
             mean = 0.0
         dist = distance(embeddings1 - mean, embeddings2 - mean,
                         distance_metric)
-        print(dist)
+        dist_hist = np.append(dist_hist, dist)
 
         # Find the best threshold for the fold
         acc_train = np.zeros((nrof_thresholds))
@@ -530,6 +533,11 @@ def calculate_roc(thresholds,
 
         tpr = np.mean(tprs, 0)
         fpr = np.mean(fprs, 0)
+
+    print(dist_hist)
+    plt.hist(dist_hist, bins=50)
+    plt.show()
+
     return tpr, fpr, accuracy
 
 

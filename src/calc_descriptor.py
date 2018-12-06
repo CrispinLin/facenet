@@ -48,14 +48,11 @@ def main(args):
 
         with tf.Session() as sess:
 
-            # Read the file containing the pairs used for testing
-            pairs = own.read_pairs(os.path.expanduser(args.lfw_pairs))
-
+            # Read the file containing the labels used for generate embeddings
             # Get the paths for the corresponding images
-            paths, actual_issame = own.get_paths(
-                os.path.expanduser(args.lfw_dir), pairs)
-            print(paths)
-            input("paths")
+            paths, tags = own.read_input(
+                os.path.expanduser(args.lfw_pairs),
+                os.path.expanduser(args.lfw_dir))
 
             image_paths_placeholder = tf.placeholder(
                 tf.string, shape=(None, 1), name='image_paths')
@@ -104,24 +101,23 @@ def main(args):
             evaluate(sess, eval_enqueue_op, image_paths_placeholder,
                      labels_placeholder, phase_train_placeholder,
                      batch_size_placeholder, control_placeholder, embeddings,
-                     label_batch, paths, actual_issame, args.lfw_batch_size,
+                     label_batch, paths, args.lfw_batch_size,
                      args.lfw_nrof_folds, args.distance_metric,
                      args.subtract_mean, args.use_flipped_images,
-                     args.use_fixed_image_standardization)
+                     args.use_fixed_image_standardization, args.output_file,
+                     tags)
 
 
 def evaluate(sess, enqueue_op, image_paths_placeholder, labels_placeholder,
              phase_train_placeholder, batch_size_placeholder,
-             control_placeholder, embeddings, labels, image_paths,
-             actual_issame, batch_size, nrof_folds, distance_metric,
-             subtract_mean, use_flipped_images,
-             use_fixed_image_standardization):
+             control_placeholder, embeddings, labels, image_paths, batch_size,
+             nrof_folds, distance_metric, subtract_mean, use_flipped_images,
+             use_fixed_image_standardization, output_filepath, tags):
     # Run forward pass to calculate embeddings
     print('Runnning forward pass on LFW images')
 
     # Enqueue one epoch of image paths and labels
-    nrof_embeddings = len(
-        actual_issame) * 2  # nrof_pairs * nrof_images_per_pair
+    nrof_embeddings = len(image_paths)  # nrof_pairs * nrof_images_per_pair
     nrof_flips = 2 if use_flipped_images else 1
     nrof_images = nrof_embeddings * nrof_flips
     labels_array = np.expand_dims(np.arange(0, nrof_images), 1)
@@ -131,9 +127,9 @@ def evaluate(sess, enqueue_op, image_paths_placeholder, labels_placeholder,
     if use_fixed_image_standardization:
         control_array += np.ones_like(
             labels_array) * facenet.FIXED_STANDARDIZATION
-    if use_flipped_images:
-        # Flip every second image
-        control_array += (labels_array % 2) * facenet.FLIP
+    # if use_flipped_images:
+    #     # Flip every second image
+    #     control_array += (labels_array % 2) * facenet.FLIP
     sess.run(
         enqueue_op, {
             image_paths_placeholder: image_paths_array,
@@ -142,8 +138,7 @@ def evaluate(sess, enqueue_op, image_paths_placeholder, labels_placeholder,
         })
 
     embedding_size = int(embeddings.get_shape()[1])
-    print(nrof_images)
-    assert nrof_images % batch_size == 0, 'The number of LFW images must be an integer multiple of the LFW batch size'
+    # assert nrof_images % batch_size == 0, 'The number of LFW images must be an integer multiple of the LFW batch size'
     nrof_batches = nrof_images // batch_size
     emb_array = np.zeros((nrof_images, embedding_size))
     lab_array = np.zeros((nrof_images, ))
@@ -159,32 +154,38 @@ def evaluate(sess, enqueue_op, image_paths_placeholder, labels_placeholder,
             print('.', end='')
             sys.stdout.flush()
     embeddings = np.zeros((nrof_embeddings, embedding_size * nrof_flips))
+    print(len(emb_array))
+    print("emb_array_size")
 
-    if use_flipped_images:
-        # Concatenate embeddings for flipped and non flipped version of the images
-        embeddings[:, :embedding_size] = emb_array[0::2, :]
-        embeddings[:, embedding_size:] = emb_array[1::2, :]
-    else:
-        embeddings = emb_array
+    with open(output_filepath, 'w+') as output:
+        for i, tag in enumerate(tags):
+            output.write(tag[1] + ' ' + ' '.join(map(str, emb_array[i])) +
+                         '\n')
+    # if use_flipped_images:
+    #     # Concatenate embeddings for flipped and non flipped version of the images
+    #     embeddings[:, :embedding_size] = emb_array[0::2, :]
+    #     embeddings[:, embedding_size:] = emb_array[1::2, :]
+    # else:
+    #     embeddings = emb_array
 
-    assert np.array_equal(
-        lab_array, np.arange(nrof_images)
-    ) == True, 'Wrong labels used for evaluation, possibly caused by training examples left in the input pipeline'
-    tpr, fpr, accuracy, val, val_std, far = own.evaluate(
-        embeddings,
-        actual_issame,
-        nrof_folds=nrof_folds,
-        distance_metric=distance_metric,
-        subtract_mean=subtract_mean)
+    # assert np.array_equal(
+    #     lab_array, np.arange(nrof_images)
+    # ) == True, 'Wrong labels used for evaluation, possibly caused by training examples left in the input pipeline'
+    # tpr, fpr, accuracy, val, val_std, far = own.evaluate(
+    #     embeddings,
+    #     actual_issame,
+    #     nrof_folds=nrof_folds,
+    #     distance_metric=distance_metric,
+    #     subtract_mean=subtract_mean)
 
-    print('Accuracy: %2.5f+-%2.5f' % (np.mean(accuracy), np.std(accuracy)))
-    print('Validation rate: %2.5f+-%2.5f @ FAR=%2.5f' % (val, val_std, far))
+    # print('Accuracy: %2.5f+-%2.5f' % (np.mean(accuracy), np.std(accuracy)))
+    # print('Validation rate: %2.5f+-%2.5f @ FAR=%2.5f' % (val, val_std, far))
 
-    auc = metrics.auc(fpr, tpr)
-    print('Area Under Curve (AUC): %1.3f' % auc)
-    print("FIXME 2 validate_on_own.py, line 183")
-    # eer = brentq(lambda x: 1. - x - interpolate.interp1d(fpr, tpr)(x), 0., 1.)
-    # print('Equal Error Rate (EER): %1.3f' % eer)
+    # auc = metrics.auc(fpr, tpr)
+    # print('Area Under Curve (AUC): %1.3f' % auc)
+    # print("FIXME 2 validate_on_own.py, line 183")
+    # # eer = brentq(lambda x: 1. - x - interpolate.interp1d(fpr, tpr)(x), 0., 1.)
+    # # print('Equal Error Rate (EER): %1.3f' % eer)
 
 
 def parse_arguments(argv):
@@ -215,6 +216,11 @@ def parse_arguments(argv):
         type=str,
         help='The file containing the pairs to use for validation.',
         default='data/own_pairs.txt')
+    parser.add_argument(
+        '--output_file',
+        type=str,
+        help='tag + embedding output',
+        default='data/output.txt')
     parser.add_argument(
         '--lfw_nrof_folds',
         type=int,
