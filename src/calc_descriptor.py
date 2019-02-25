@@ -51,7 +51,7 @@ def main(args):
             # Read the file containing the labels used for generate embeddings
             # Get the paths for the corresponding images
             paths, tags = own.read_input(
-                os.path.expanduser(args.lfw_pairs),
+                os.path.expanduser(args.tag_file),
                 os.path.expanduser(args.lfw_dir))
 
             image_paths_placeholder = tf.placeholder(
@@ -105,14 +105,15 @@ def main(args):
                      args.lfw_nrof_folds, args.distance_metric,
                      args.subtract_mean, args.use_flipped_images,
                      args.use_fixed_image_standardization, args.output_file,
-                     tags)
+                     tags, args.patchout_dir)
 
 
 def evaluate(sess, enqueue_op, image_paths_placeholder, labels_placeholder,
              phase_train_placeholder, batch_size_placeholder,
              control_placeholder, embeddings, labels, image_paths, batch_size,
              nrof_folds, distance_metric, subtract_mean, use_flipped_images,
-             use_fixed_image_standardization, output_filepath, tags):
+             use_fixed_image_standardization, output_filepath, tags,
+             patchout_dir):
     # Run forward pass to calculate embeddings
     print('Runnning forward pass on LFW images')
 
@@ -159,8 +160,9 @@ def evaluate(sess, enqueue_op, image_paths_placeholder, labels_placeholder,
 
     with open(output_filepath, 'w+') as output:
         for i, tag in enumerate(tags):
-            output.write(tag[1] + ' ' + ' '.join(map(str, emb_array[i])) +
-                         '\n')
+            x, y = get_xy(tag[1], patchout_dir)
+            output.write(tag[1] + ' ' + x + ' ' + y + ' ' +
+                         ' '.join(map(str, emb_array[i])) + '\n')
     # if use_flipped_images:
     #     # Concatenate embeddings for flipped and non flipped version of the images
     #     embeddings[:, :embedding_size] = emb_array[0::2, :]
@@ -188,6 +190,15 @@ def evaluate(sess, enqueue_op, image_paths_placeholder, labels_placeholder,
     # # print('Equal Error Rate (EER): %1.3f' % eer)
 
 
+def get_xy(tag, patchout_dir):
+    with open(patchout_dir, 'r') as patchout:
+        for line_patchout in patchout:
+            if tag + "," in line_patchout:
+                param_list = line_patchout.split()[1:3]
+                x, y = (x for x in param_list)
+    return x, y
+
+
 def parse_arguments(argv):
     parser = argparse.ArgumentParser()
 
@@ -212,10 +223,14 @@ def parse_arguments(argv):
         help='Image size (height, width) in pixels.',
         default=160)
     parser.add_argument(
-        '--lfw_pairs',
+        '--tag_file',
         type=str,
-        help='The file containing the pairs to use for validation.',
-        default='data/own_pairs.txt')
+        help='The file containing foldername and tag.',
+        default='data/tag.txt')
+    parser.add_argument(
+        '--patchout_dir',
+        type=str,
+        help='Path of patchout.txt containing tag, x, y, etc')
     parser.add_argument(
         '--output_file',
         type=str,
